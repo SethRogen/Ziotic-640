@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<library>
+    <item>
+        <name>direct_access_forbidden</name>
+        <string>Direct access of this file is forbidden. This file is used for this websites API system.[br /]To
+            unprotect this file, uncomment out
+        </string>
+        <usesBB>true</usesBB>
+    </item>
+    <item>
+        <name>download_no_get</name>
+        <string>Please do not directly access this page. This page is to be used when linked to.</string>
+        <usesBB>true</usesBB>
+    </item>
+    <item>
+        <name>file_no_accesskey</name>
+        <string>This file also does not have a secret accesskey, so it is not possible to access this page.</string>
+        <usesBB>true</usesBB>
+    </item>
+    <item>
+        <name>new_install_welcome</name>
+        <string>This website's configuration has not yet been created. This will result in a website that does not
+            function correctly.[br /]To install your website use the installer package included in the JArD package.[br
+            /][br /][b]Warning: [/b]It does not look like you have an install directory uploaded.
+        </string>
+        <usesBB>true</usesBB>
+    </item>
+    <item>
+        <name>download_no_exist</name>
+        <string>The file requested does not exist or encountered an unknown error. Please try again later.</string>
+        <usesBB>true</usesBB>
+    </item>
+    <item>
+        <name>api_lockdown</name>
+        <string>This website has been set to [dotted]LOCKDOWN_MODE[/dotted]. This means all PHP scripts using the JArD
+            API are disabled.
+        </string>
+        <usesBB>true</usesBB>
+    </item>
+    <item>
+        <name>mysql_connection_error</name>
+        <string>Something has gone wrong with the MySQL server's connection with %/FRAMEWORK/%. Maybe trying to refresh
+            this page will help?
+        </string>
+        <usesBB>true</usesBB>
+    </item>
+    <item>
+        <name>db_connection_error</name>
+        <string>Oops, it looks like the connection between the mysql server and the mysql database went terribly
+            wrong!
+        </string>
+        <usesBB>true</usesBB>
+    </item>
+    <item>
+        <name>wrong_password</name>
+        <string>Sorry the password you have entered does not match the username entered.</string>
+        <usesBB>true</usesBB>
+    </item>
+    <item>
+        <name>unknown_username</name>
+        <string>Sorry the username you have entered does not match any of them in our database.</string>
+        <usesBB>true</usesBB>
+    </item>
+    <item>
+        <name>profile_created</name>
+        <string>Your username and other account details have been added to our database. You may not login both game and
+            forum using your login details.
+        </string>
+        <usesBB>true</usesBB>
+    </item>
+    <item>
+        <name>profile_deleted</name>
+        <string>Your profile has been deleted. This will mean all your posts will not show up as being posted by you and
+            you will no longer be able to login with your old login details.[br]If you wish to reverse this change, we
+            have already sent you an email with all the information you will need to get your account back.
+        </string>
+        <usesBB>true</usesBB>
+    </item>
+    <item>
+        <name>banned_warning</name>
+        <string>We are sorry, but your account has been banned from logging into our login server(s). For more
+            information we have sent an email to the email you registered with, with all the info you may need to know
+            about the reason of your ban.
+        </string>
+        <usesBB>true</usesBB>
+    </item>
+    <item>
+        <name>muted_warning</name>
+        <string>Just before we throw you to the main site, we would just like to say that you have been muted from the
+            forum and %SITENAME%. This mute will expire on the %MUTE->EXPIRE%. You will still be allowed to use the
+            private message system, but no public messages or comments from you will enter our database.
+        </string>
+        <usesBB>true</usesBB>
+        <disabled>true</disabled>
+    </item>
+</library>

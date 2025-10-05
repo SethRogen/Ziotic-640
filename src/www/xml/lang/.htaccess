@@ -1,0 +1,5 @@
+Options All -Indexes
+<Files *.xml>
+  order allow,deny
+  deny from all
+</Files>

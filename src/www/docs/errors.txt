@@ -1,0 +1,5 @@
+9099 - File is protected by the protectFile() function.
+9098 - No arguments in header (download.php).
+9097 - File does not exist (download.php).
+9096 - LOCKDOWN_MODE enabled.
+9095 - New install welcome message.
