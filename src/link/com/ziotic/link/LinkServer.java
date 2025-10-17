@@ -3,18 +3,16 @@ package com.ziotic.link;
 import com.ziotic.Application;
 import com.ziotic.Static;
 import com.ziotic.adapter.DatabaseLoader;
-import com.ziotic.adapter.db.DatabaseLoaderAdapter;
-import com.ziotic.adapter.protocol.HandshakeCodec;
+import com.ziotic.adapter.file.FilePlayerStorage;
 import com.ziotic.adapter.protocol.ProtocolAdapter;
 import com.ziotic.content.cc.Clan;
 import com.ziotic.content.cc.ClanManager;
 import com.ziotic.engine.Engine;
-import com.ziotic.io.sql.SQLInitiator;
-import com.ziotic.io.sql.SQLSession;
 import com.ziotic.link.network.LConnectionHandler;
 import com.ziotic.link.network.LFrameDispatcher;
 import com.ziotic.link.network.LinkCodec;
 import com.ziotic.link.network.WorldListEvent;
+import com.ziotic.logic.player.PlayerSave;
 import com.ziotic.logic.player.PlayerType;
 import com.ziotic.logic.player.RemotePlayer;
 import com.ziotic.network.Frame;
@@ -22,7 +20,6 @@ import com.ziotic.network.Frame.FrameType;
 import com.ziotic.network.FrameBuilder;
 import com.ziotic.network.handler.FrameHandlerManager;
 import com.ziotic.utility.Logging;
-import com.ziotic.utility.Pool;
 import com.ziotic.utility.Text;
 import com.ziotic.utility.script.JavaScriptManager;
 import org.apache.log4j.Logger;
@@ -37,8 +34,6 @@ import org.apache.mina.util.AvailablePortFinder;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.sql.ResultSet;
-import java.sql.Statement;
 import java.util.*;
 
 /**
@@ -58,18 +53,15 @@ public class LinkServer implements Application {
     private Map<Integer, WorldServerSession> games = new HashMap<Integer, WorldServerSession>();
     private Map<String, RemotePlayer> players = new HashMap<String, RemotePlayer>();
 
-    private Pool<SQLSession> sqlPool = null;
-    private DatabaseLoader databaseLoader = new DatabaseLoaderAdapter();
+    private DatabaseLoader databaseLoader = new FilePlayerStorage();
 
     public void main(String[] args) throws Throwable {
         Static.appType = AppType.LINK;
         Static.engine = new Engine();
         Static.js = new JavaScriptManager();
 
-        sqlPool = new Pool<SQLSession>(SQLSession.class, new SQLInitiator(Static.conf), 4);
-        logger.info("Database connections pooled");
         databaseLoader.reload();
-        logger.info("Database loaded");
+        logger.info("File player storage initialized");
         worldList = Static.xml.readObject(Static.parseString("%WORK_DIR%/worlds.xml"));
         logger.info("World-list loaded");
         Static.proto = new ProtocolAdapter();
@@ -169,10 +161,6 @@ public class LinkServer implements Application {
 
     public Map<String, RemotePlayer> getPlayers() {
         return players;
-    }
-
-    public Pool<SQLSession> getSQLPool() {
-        return sqlPool;
     }
 
     public DatabaseLoader getDBLoader() {
@@ -489,54 +477,41 @@ public class LinkServer implements Application {
 
     public void handlePlayerMuting(String moderator, boolean mute, String userName) {
         userName = Text.formatNameForProtocol(userName);
-        Pool<SQLSession> pool = Static.currentLink().getSQLPool();
-        SQLSession sql = null;
         try {
-            sql = pool.acquire();
-            Statement st = sql.createStatement();
-
-            ResultSet rs = st.executeQuery("SELECT * FROM forummembers WHERE " +
-                    "members_seo_name='" + userName
-                    .replace
-                            ("_",
-                                    "-") + "' LIMIT 1");
-            if (!rs.next()) {
-                rs.close();
-                st.close();
+            // Check if player exists
+            if (!com.ziotic.utility.FilePlayerManager.playerExists(userName)) {
                 writeMutingResponse(moderator, userName, mute, false, false);
                 return;
             }
 
-            int userId = rs.getInt("member_id");
-            rs.close();
+            // Load player save to check current mute state
+            String playerFilePath = com.ziotic.utility.FilePlayerManager.getPlayerFilePath(userName);
+            byte[] playerData = com.ziotic.utility.FilePlayerManager.readPlayerFile(playerFilePath);
 
-            rs = st.executeQuery("SELECT * FROM playersave WHERE id='" + userId + "' LIMIT 1");
-            boolean currentState = false;
-            if (!rs.next()) {
-                rs.close();
-                st.close();
+            if (playerData == null) {
                 writeMutingResponse(moderator, userName, mute, false, false);
                 return;
-            } else {
-                currentState = rs.getInt("muted") == 1;
             }
 
-            StringBuilder query = new StringBuilder();
-            query.append("UPDATE playersave SET");
-            query.append(" muted='").append(mute ? 1 : 0).append("'");
-            query.append(" WHERE id='").append(userId).append("'");
+            // Deserialize player data
+            PlayerSave playerSave = new PlayerSave();
+            playerSave.load(playerData);
 
-            st = sql.createStatement();
-            st.executeUpdate(query.toString());
-            st.close();
+            boolean currentState = playerSave.isMuted;
+            boolean changedState = (mute != currentState);
 
-            writeMutingResponse(moderator, userName, mute, true, mute != currentState);
+            // Update mute status
+            playerSave.isMuted = mute;
+
+            // Save updated player data
+            byte[] updatedData = playerSave.toByteArray();
+            com.ziotic.utility.FilePlayerManager.writePlayerFile(playerFilePath, updatedData);
+
+            writeMutingResponse(moderator, userName, mute, true, changedState);
+
         } catch (Exception e) {
             logger.error("Error setting mute settings for [name=" + userName + "]", e);
-        } finally {
-            if (sql != null) {
-                pool.release(sql);
-            }
+            writeMutingResponse(moderator, userName, mute, false, false);
         }
     }
 
